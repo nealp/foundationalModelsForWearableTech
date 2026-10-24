@@ -21,6 +21,12 @@ def test_folds_are_balanced_and_repeatable():
     assert splits.build_folds(SUBJECTS) == folds
 
 
+def test_fewer_subjects_than_folds():
+    """After a --quick preprocess (3 people), use 3 folds instead of crashing."""
+    folds = splits.build_folds(["S2", "S3", "S4"])
+    assert sorted(folds.values()) == [0, 1, 2]
+
+
 def test_save_folds_keeps_other_datasets(tmp_path):
     """Writing WESAD folds must not erase Sleep-EDF folds already in folds.json."""
     path = tmp_path / "folds.json"

@@ -5,6 +5,20 @@ Written to help us present the project (video, Devpost, judges' questions).
 
 **Deadline:** 8:00 PM · **Target:** 7:00 PM · **Started:** ~3:00 PM, Sat Oct 24 2026
 
+## 📍 Current status (updated every stage)
+
+| Stage | Status | Finished |
+|---|---|---|
+| 1. Setup | ✅ Done | ~3:05 PM |
+| 2. Data + first results (Naive, ETS) | ✅ Done | ~3:15 PM |
+| 3. Chronos, TimesFM, XGBoost, Sleep-EDF | ✅ Done | ~4:15 PM |
+| 4. MOMENT + demo stress/sleep pages | ⏳ Next | target 6:20 PM |
+| 4b. PatchTST (add-back, we're ahead) | ⏳ After 4 | — |
+| 5. Ship: video, README, Devpost | ⏳ | target 7:00 PM |
+
+**Real data so far:** Sleep-EDF ✅ (tested on 3 real people) · WESAD ❌ (waiting on download link)
+**Real jobs on Colab:** none run yet. All scores below are from local tests unless marked REAL.
+
 ---
 
 ## Stage 1 — Setup (done ~3:05 PM)
@@ -74,3 +88,55 @@ Written to help us present the project (video, Devpost, judges' questions).
 - Fake-data numbers (just a sanity check, NOT real results): ETS MAE 5.17 bpm vs Naive 5.33 bpm.
 
 **Still to do with real data:** run `python -m src.data.wesad --quick` on Colab with the real WESAD download.
+
+---
+
+## Stage 3 — Foundation models + stress + sleep data (done ~4:15 PM, target was 5:30)
+
+**Goal:** get the big pre-trained AI models forecasting heart rate, a classic ML model detecting stress,
+and the sleep dataset ready.
+
+**What we built**
+- **Chronos-2 (Amazon)**: `src/models/chronos_model.py`. Zero-shot heart-rate forecasting: it gets the
+  last 512 s of heart rate and predicts the next 60 s. It has **never been trained on our data**.
+- **TimesFM 3.0 (Google)**: `src/models/timesfm_model.py`. Same job, same inputs and outputs, different company's model.
+- **Hand-made features (P1)**: `src/data/features.py` turns each raw chunk into summary numbers:
+  - Stress: average/spread/min/max/percentiles/trend of each wrist channel, plus overall movement.
+  - Sleep: the same stats plus EEG "band powers" (how much slow delta waves vs. fast beta waves). This is
+    how sleep doctors read EEG.
+- **XGBoost (P2)**: `src/models/xgb_baseline.py` is the classic-ML tier. It learns from those features.
+  It is trained only on people in the *other* folds, and balances classes so rare sleep stages (N1) count.
+- **Sleep-EDF processing (P1)**: `src/data/sleepedf.py` takes brainwaves (Fpz-Cz EEG) → 30 s chunks →
+  labels W/N1/N2/N3/REM. Stages 3+4 are merged into N3 (modern standard). Long awake periods are trimmed to
+  30 min before and after sleep (standard practice; otherwise ~70% of the data is "awake").
+- **run.py** now runs stress and sleep too: `python -m src.run --task stress --model xgboost`.
+  It saves predictions with timestamps / epoch numbers so the demo can draw timelines and hypnograms.
+- **One shared rule for classifiers:** every model file has `build(task)` → `.fit(X, y)` / `.predict(X)`,
+  so adding MOMENT in Stage 4 is plug-and-play.
+
+**Decisions + why**
+- **Newest model versions** (the plan says to use the newest): Chronos-2 (120M parameters, Oct 2025) and
+  TimesFM 3.0 (330M). We read each library's current README first, because TimesFM 3.0 changed its whole
+  API (`timesfm3` package). Code written from memory would have broken.
+- **Foundation-model packages are installed one per Colab session**; we also checked locally that
+  Chronos + TimesFM install together without conflicts.
+
+**How we checked it**
+- 42+ automated tests. The foundation-model tests download the **real model weights** and run them.
+- Fake-data sanity numbers (NOT real results), HR forecast MAE: Chronos 1.47, TimesFM 1.46, vs.
+  ETS ~5.2 and Naive ~5.3 bpm. Each took ~7 s for 18 windows on a laptop CPU.
+- XGBoost on fake stress data scored ~50% (coin flip). That's **what should happen**: the fake data has
+  no real stress signal. A high score would have meant a bug leaking test answers into training.
+- **Tested on REAL sleep data:** downloaded 3 real Sleep-EDF people (6 nights) and ran XGBoost.
+  - 841–1,186 thirty-second chunks per night (≈ 7–9 h). EEG ±200 µV. All 5 stages present; N2 is the most common, as in real sleep.
+  - **First real result:** XGBoost sleep staging macro-F1 **0.44 / 0.67 / 0.72** on the 3 folds (accuracy 57–76%).
+    Only 2 people to learn from per fold, so we expect this to go up with all 20.
+
+**Problems we hit and fixed**
+- **PhysioNet's download server stalled** (~0 KB/s). We switched to PhysioNet's official AWS Open Data mirror
+  (same files, checksums still verified): 2 nights now download in **8 seconds**.
+- **The fold builder crashed with fewer than 5 people** (e.g. after a `--quick` preprocess). It now uses
+  fewer folds automatically; we added a test for it. Found by running the real pipeline, not by the unit tests.
+- **The test suite froze on macOS**: XGBoost and PyTorch each ship their own OpenMP threading library and can
+  deadlock in one Python process. The real jobs are never affected (one model per process, Colab is Linux);
+  the foundation-model tests now run each model in its own process. Full suite: 43 tests in ~24 s.

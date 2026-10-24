@@ -295,20 +295,20 @@ Each person only edits their own folders. Need a change elsewhere? Ask the owner
 
 ### M1 — Data (P1)
 - [ ] `wesad.py` produces `wesad_hr.parquet` and `wesad_windows.npz`
-- [ ] `sleepedf.py` produces `sleepedf_epochs.npz` (20 people)
-- [ ] `splits.py` produces `folds.json`
+- [x] `sleepedf.py` produces `sleepedf_epochs.npz` (20 people)
+- [x] `splits.py` produces `folds.json`
 - [ ] `test_smoke.py` passes (shapes, label counts, no subject leaks across folds)
 - [ ] Quick plot of one subject's HR + labels to sanity check
 
 ### M2 — Baselines (P2)
 - [x] `run.py` CLI works end to end with Naive model
 - [ ] ARIMA *(cut today)*, ETS on Task 1
-- [ ] XGBoost on Tasks 2 and 3
+- [x] XGBoost on Tasks 2 and 3
 - [ ] First rows in `results.csv` ✅ (we now have something to beat)
 
 ### M3 — Foundation Models (P2)
-- [ ] TimesFM on Task 1 (zero-shot)
-- [ ] Chronos on Task 1 (zero-shot)
+- [x] TimesFM on Task 1 (zero-shot)
+- [x] Chronos on Task 1 (zero-shot)
 - [ ] MOMENT embeddings + logistic regression on Tasks 2 and 3
 
 ### M4 — Neural Nets (P2) *(cut today unless ahead of schedule)*

@@ -14,7 +14,7 @@ def forecast(context_df, horizon, model="naive"):
 
     Returns a DataFrame with columns unique_id, ds, y_hat.
     """
-    sf = StatsForecast(models=[MODELS[model]()], freq="s", n_jobs=-1)
+    sf = StatsForecast(models=[MODELS[model]()], freq="s", n_jobs=1)  # 1 process: avoids a hang when torch is loaded, and is faster for small jobs
     pred = sf.forecast(h=horizon, df=context_df[["unique_id", "ds", "y"]])
     value_col = [c for c in pred.columns if c not in ("unique_id", "ds")][0]
     return pred.rename(columns={value_col: "y_hat"})[["unique_id", "ds", "y_hat"]].reset_index(drop=True)

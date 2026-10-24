@@ -7,6 +7,7 @@ Examples:
 Scores go to results/results.csv (or results_quick.csv with --quick), one row per fold and metric.
 """
 import argparse
+import importlib
 import json
 import time
 
@@ -21,6 +22,20 @@ from src.eval import metrics, results
 FORECASTERS = {
     "naive": (1, lambda: _stats("naive")),
     "ets": (1, lambda: _stats("ets")),
+    "chronos": (4, lambda: importlib.import_module("src.models.chronos_model").forecast),
+    "timesfm": (4, lambda: importlib.import_module("src.models.timesfm_model").forecast),
+}
+
+# name -> function that imports the model module. Each module has TIER and build(task) -> object
+# with .fit(X, y) and .predict(X) (X = raw windows from the processed .npz file).
+CLASSIFIERS = {
+    "xgboost": lambda: importlib.import_module("src.models.xgb_baseline"),
+}
+
+# task -> (processed file, dataset name in folds.json)
+CLASSIFY_DATA = {
+    "stress": (lambda: config.WESAD_WINDOWS, "wesad"),
+    "sleep": (lambda: config.SLEEPEDF_EPOCHS, "sleepedf"),
 }
 
 
@@ -105,6 +120,52 @@ def run_hr(model, quick=False, max_windows=None):
     print(f"scores -> {out_csv}\npredictions -> {pred_path}")
 
 
+def run_classify(task, model, quick=False):
+    """Tasks 2 + 3: train on the other folds' people, test on this fold's people."""
+    module = CLASSIFIERS[model]()
+    path, dataset = CLASSIFY_DATA[task]
+    data = np.load(path(), allow_pickle=True)
+    X, y, subject = data["X"], data["y"], data["subject"].astype(str)
+    folds = load_folds(dataset)
+
+    # extra columns the demo needs to put predictions back on a timeline
+    info = pd.DataFrame({"subject": subject})
+    if "start_s" in data.files:
+        info["start_s"] = data["start_s"]
+    if "night" in data.files:
+        info["night"] = data["night"]
+        info["epoch"] = info.groupby(["subject", "night"]).cumcount()
+
+    if quick:  # 1 fold: test on 1 person, train on the next 2
+        people = sorted(folds)[: config.QUICK_N_SUBJECTS]
+        splits = {0: ([people[0]], people[1:])}
+    else:
+        splits = {}
+        for k in sorted(set(folds.values())):
+            test = [s for s, f in folds.items() if f == k]
+            splits[k] = (test, [s for s, f in folds.items() if f != k])
+
+    out_csv = config.RESULTS_QUICK_CSV if quick else config.RESULTS_CSV
+    pred_path = config.PREDICTIONS_DIR / f"{task}_{model}{'_quick' if quick else ''}.parquet"
+    all_preds = []
+    for fold, (test_people, train_people) in splits.items():
+        start = time.time()
+        train, test = np.isin(subject, train_people), np.isin(subject, test_people)
+        clf = module.build(task)
+        clf.fit(X[train], y[train])
+        y_pred = np.asarray(clf.predict(X[test]))
+        runtime = time.time() - start
+
+        scores = {"macro_f1": metrics.macro_f1(y[test], y_pred), "accuracy": metrics.accuracy(y[test], y_pred)}
+        for metric, value in scores.items():  # save after EVERY fold
+            results.append_result(out_csv, task, model, module.TIER, fold, metric, value, runtime)
+        all_preds.append(info[test].assign(y=y[test], y_pred=y_pred, fold=fold))
+        pd.concat(all_preds, ignore_index=True).to_parquet(pred_path, index=False)
+        print(f"fold {fold}: train {train.sum()} / test {test.sum()} windows, "
+              f"macro-F1 {scores['macro_f1']:.3f}, accuracy {scores['accuracy']:.3f} ({runtime:.0f}s)")
+    print(f"scores -> {out_csv}\npredictions -> {pred_path}")
+
+
 def main(argv=None):
     """Parse command line arguments and run the chosen task + model."""
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -121,7 +182,9 @@ def main(argv=None):
             raise SystemExit(f"unknown hr model {args.model!r}; choose from {sorted(FORECASTERS)}")
         run_hr(args.model, quick=args.quick, max_windows=args.max_windows)
     else:
-        raise SystemExit(f"task {args.task!r} arrives in Stage 3")
+        if args.model not in CLASSIFIERS:
+            raise SystemExit(f"unknown {args.task} model {args.model!r}; choose from {sorted(CLASSIFIERS)}")
+        run_classify(args.task, args.model, quick=args.quick)
 
 
 if __name__ == "__main__":

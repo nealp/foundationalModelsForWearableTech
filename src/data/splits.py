@@ -18,6 +18,7 @@ from src import config
 def build_folds(subjects, n_folds=config.N_FOLDS, seed=config.SEED):
     """Assign each subject to one test fold (0..n_folds-1) with GroupKFold, groups = subject."""
     subjects = sorted(subjects)
+    n_folds = min(n_folds, len(subjects))  # e.g. only 3 people after a --quick preprocess
     gkf = GroupKFold(n_splits=n_folds, shuffle=True, random_state=seed)
     folds = {}
     for fold, (_, test_idx) in enumerate(gkf.split(subjects, groups=subjects)):
