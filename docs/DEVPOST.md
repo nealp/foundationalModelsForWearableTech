@@ -1,17 +1,6 @@
 # Devpost Submission Draft
 
-**Placeholders to fill (search for `[[`):**
-- `[[N_SUBJECTS_WESAD]]` WESAD people used
-- `[[N_SUBJECTS_SLEEP]]` Sleep-EDF people used
-- `[[N_MODELS]]` number of models benchmarked
-- `[[WINNER_HR]]` best model, heart-rate forecast
-- `[[HR_BEST_MAE]]` its MAE (bpm)
-- `[[HR_BASELINE_MAE]]` best simple baseline MAE (bpm)
-- `[[WINNER_STRESS]]` best model, stress detection
-- `[[STRESS_BEST_F1]]` its macro-F1
-- `[[WINNER_SLEEP]]` best model, sleep staging
-- `[[SLEEP_BEST_F1]]` its macro-F1
-- `[[HEADLINE_FINDING]]` one sentence: did frozen foundation models beat the rest, and where?
+*Numbers below are real (subject-wise cross-validation). Heart-rate and stress pipelines are built and tested but were not run on WESAD in time.*
 
 ---
 
@@ -24,16 +13,16 @@ A benchmark plus a live demo. Three tasks:
 2. **Stress detection:** stressed vs. calm per 60-second window (WESAD).
 3. **Sleep staging:** Wake / N1 / N2 / N3 / REM per 30 seconds from EEG (Sleep-EDF), plus a sleep efficiency score per night.
 
-Our Streamlit app has a leaderboard, a forecast overlay, a stress timeline and a sleep hypnogram. Headline: [[HEADLINE_FINDING]]. Best heart-rate model: [[WINNER_HR]] at [[HR_BEST_MAE]] bpm MAE, against [[HR_BASELINE_MAE]] for the best simple baseline. Best stress model: [[WINNER_STRESS]] ([[STRESS_BEST_F1]] macro-F1). Best sleep model: [[WINNER_SLEEP]] ([[SLEEP_BEST_F1]] macro-F1).
+Our Streamlit app has a leaderboard, a forecast overlay, a stress timeline and a sleep hypnogram. **Headline: a frozen foundation model that never saw a brainwave matches hand-engineered sleep features.** On sleep staging (20 people, 42,308 thirty-second EEG epochs), MOMENT + a linear probe scored **0.696 macro-F1 (76.9% accuracy)** vs. XGBoost's **0.705 (77.5%)** on the same unseen people. XGBoost averages **0.69 ± 0.03** over all 5 folds. With only 2 people to learn from, MOMENT **won clearly: 0.635 vs. 0.435**. Foundation models shine when labelled data is scarce, which is exactly the wearable situation. On a real night, true sleep efficiency was 77.6% and predicted 78.1%. The heart-rate (Naive, ETS, PatchTST, Chronos-2, TimesFM 3.0) and stress (XGBoost, MOMENT) pipelines are fully built and tested end to end; we ran out of time to run them on WESAD.
 
 ## How we built it
-We compared [[N_MODELS]] models in four tiers:
+We built 9 models in four tiers:
 - **Simple:** Naive (repeat last value) and ETS.
 - **Classic ML:** XGBoost on hand-made features (including EEG band powers for sleep).
 - **Neural net:** PatchTST, trained from scratch on our data.
 - **Foundation models:** Chronos-2 and TimesFM 3.0 (zero-shot forecasting), MOMENT (classification).
 
-**Fair testing:** we use subject-wise cross-validation. People are split into 5 folds, and every model is scored on people it never saw. Data: [[N_SUBJECTS_WESAD]] WESAD people, [[N_SUBJECTS_SLEEP]] Sleep-EDF people.
+**Fair testing:** we use subject-wise cross-validation. People are split into 5 folds, and every model is scored on people it never saw. Data: 20 Sleep-EDF people (39 nights); WESAD (15 people) pipeline ready.
 
 **Fair to the foundation models too:** they stay frozen. Chronos-2 and TimesFM forecast with zero training on our data. For MOMENT, we extract embeddings (a numeric fingerprint of each window) and train only a tiny logistic regression on top, a "linear probe." The big model is never fine-tuned. The other tiers do train on our data, so any foundation-model win is not from extra training.
 
