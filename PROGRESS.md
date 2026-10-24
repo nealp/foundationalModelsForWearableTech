@@ -16,8 +16,9 @@ Written to help us present the project (video, Devpost, judges' questions).
 | 4b. PatchTST (add-back) | ✅ Done | ~6:05 PM |
 | 5. Ship: real Colab runs, video, README, Devpost | ⏳ NOW | target 7:00 PM |
 
-**Real data so far:** Sleep-EDF ✅ (tested on 3 real people) · WESAD ❌ (waiting on download link)
-**Real jobs on Colab:** none run yet. All scores below are from local tests unless marked REAL.
+**Real data so far:** Sleep-EDF ✅ all 20 people processed · WESAD ❌ (waiting on download link)
+**REAL result:** XGBoost sleep staging, 20 people, 5 folds → **macro-F1 0.69 ± 0.03**, accuracy ~75%.
+**Still to run (GPU):** MOMENT sleep; everything WESAD. All scores below are from local tests unless marked REAL.
 
 ---
 
@@ -171,3 +172,19 @@ and the sleep dataset ready.
 - 51 tests pass (+8 in the PatchTST environment). Includes a real-weights MOMENT test: frozen MOMENT + logistic
   regression separates slow vs. fast waves at ≥ 80% accuracy.
 - PatchTST through the real `run.py` (fake data, only 30 training steps): MAE 1.67 bpm in 26 s.
+
+---
+
+## Stage 5 — Ship (in progress, from ~6:05 PM)
+
+**What we did**
+- **README** rewritten: the pitch, 3 tasks, 4 model tiers, fair-testing note, demo, how to reproduce, datasets.
+- **Devpost draft** (`docs/DEVPOST.md`) and **video script** (`docs/VIDEO_SCRIPT.md`, 2–3 min, timed to the demo pages).
+  Real numbers go into `[[PLACEHOLDERS]]`; nothing from fake data is presented as a result.
+- **Leaderboard tool**: `python -m src.eval.summary` turns `results.csv` into the README table.
+- **First full REAL run, on a laptop:** Sleep-EDF, all 20 people
+  - Download + preprocessing: **124 s** (thanks to the AWS mirror). 39 nights, 42,308 epochs, 231 MB processed file.
+  - **XGBoost sleep staging: macro-F1 0.705 / 0.667 / 0.694 / 0.646 / 0.735 → 0.69 ± 0.03; accuracy 70–80%.**
+    In line with published feature-based results on Sleep-EDF.
+  - Demo with real predictions: SC0 night 1, true sleep efficiency **77.6%** vs. predicted **78.1%**, 80.9% of epochs correct.
+- MOMENT on the full sleep set is ~254k sequences: hours on a laptop CPU, minutes on a Colab GPU, so it runs on Colab.
