@@ -188,3 +188,10 @@ and the sleep dataset ready.
     In line with published feature-based results on Sleep-EDF.
   - Demo with real predictions: SC0 night 1, true sleep efficiency **77.6%** vs. predicted **78.1%**, 80.9% of epochs correct.
 - MOMENT on the full sleep set is ~254k sequences: hours on a laptop CPU, minutes on a Colab GPU, so it runs on Colab.
+- **First REAL MOMENT result (3 people, laptop CPU, 21 min):** on the *identical* split (train on 2 people, test on SC0):
+  - XGBoost (hand-made features): macro-F1 **0.435**, accuracy 56.5%
+  - **MOMENT, frozen, + logistic regression: macro-F1 0.635, accuracy 72.5%**
+  - → With very little training data, the frozen foundation model beat the classic ML baseline by ~20 F1 points.
+- **Colab:** Claude drove Colab through the browser (Claude in Chrome): T4 GPU, repo cloned, Sleep-EDF processed.
+  The output matched the laptop line for line (reproducible). Results go to Colab temp disk (no Drive permission
+  needed) and are read from the cell output. Running: MOMENT on all 20 people.
