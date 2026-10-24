@@ -1,0 +1,18 @@
+# Core packages: data, baselines, eval, demo, tests.
+# Colab already has numpy/pandas/torch/sklearn/xgboost, so this installs fast there.
+numpy
+pandas
+pyarrow
+scikit-learn
+xgboost
+statsforecast
+mne
+neurokit2
+matplotlib
+streamlit
+pytest
+
+# Foundation models / neural nets are NOT here on purpose: they are heavy and can
+# clash with each other's pinned versions. Install the one you need in its own Colab
+# session (see notebooks/colab_runner.ipynb, cell 3b):
+#   chronos-forecasting   timesfm   momentfm   neuralforecast
