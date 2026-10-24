@@ -288,8 +288,8 @@ Each person only edits their own folders. Need a change elsewhere? Ask the owner
 > Items marked *(cut today)* are only built if we finish early.
 
 ### M0 — Setup
-- [ ] Repo created, this file committed, `.gitignore` blocks data files
-- [ ] `requirements.txt` + `src/config.py`
+- [x] Repo created, this file committed, `.gitignore` blocks data files
+- [x] `requirements.txt` + `src/config.py`
 - [ ] `colab_runner.ipynb` clones repo and mounts Drive successfully
 - [ ] Team agrees on data formats in §4.4
 
@@ -301,7 +301,7 @@ Each person only edits their own folders. Need a change elsewhere? Ask the owner
 - [ ] Quick plot of one subject's HR + labels to sanity check
 
 ### M2 — Baselines (P2)
-- [ ] `run.py` CLI works end to end with Naive model
+- [x] `run.py` CLI works end to end with Naive model
 - [ ] ARIMA *(cut today)*, ETS on Task 1
 - [ ] XGBoost on Tasks 2 and 3
 - [ ] First rows in `results.csv` ✅ (we now have something to beat)

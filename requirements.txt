@@ -3,7 +3,7 @@
 numpy
 pandas
 pyarrow
-scikit-learn
+scikit-learn>=1.6    # GroupKFold(shuffle=True, random_state=42)
 xgboost
 statsforecast
 mne

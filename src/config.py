@@ -28,6 +28,7 @@ WESAD_WINDOWS = PROCESSED_DIR / "wesad_windows.npz"
 SLEEPEDF_EPOCHS = PROCESSED_DIR / "sleepedf_epochs.npz"
 FOLDS_JSON = PROCESSED_DIR / "folds.json"
 RESULTS_CSV = RESULTS_DIR / "results.csv"
+RESULTS_QUICK_CSV = RESULTS_DIR / "results_quick.csv"  # --quick runs go here, never on the leaderboard
 
 # Shared settings.
 SEED = 42
