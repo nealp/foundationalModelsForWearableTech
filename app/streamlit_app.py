@@ -79,10 +79,68 @@ def hr_page():
     st.pyplot(fig)
 
 
-def placeholder_page(name: str):
-    """Show a 'coming soon' page."""
-    st.title(name)
-    st.info("Coming in Stage 4.")
+def _load_preds(task: str):
+    """Real predictions if present, else fake ones with a warning banner. None if nothing at all."""
+    preds = data.load_predictions(task)
+    if not preds:
+        preds = data.make_fake_predictions(task)
+        st.warning("FAKE DATA: no real prediction files found, so these curves are made up for layout only.")
+    return preds
+
+
+def stress_page():
+    """Timeline of true vs predicted stress for one subject."""
+    st.title("Stress detection")
+    preds = _load_preds("stress")
+    model = st.selectbox("Model", sorted(preds))
+    df = preds[model]
+    subject = st.selectbox("Subject", sorted(df["subject"].unique()))
+    d = df[df["subject"] == subject].sort_values("start_s")
+    if d.empty:
+        st.info("No windows for this subject.")
+        return
+    t = d["start_s"].to_numpy() / 60.0
+    fig, axes = plt.subplots(2, 1, figsize=(8, 2.8), sharex=True)
+    for ax, col, name, color in [(axes[0], "y", "True", "black"), (axes[1], "y_pred", "Predicted", "#d9534f")]:
+        ax.step(t, d[col], where="post", color=color)
+        ax.fill_between(t, 0, d[col], step="post", color=color, alpha=0.25)
+        ax.set_yticks([0, 1], ["calm", "stress"])
+        ax.set_ylabel(name)
+    axes[1].set_xlabel("Time (minutes)")
+    fig.tight_layout()
+    st.pyplot(fig)
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Accuracy", f"{(d['y'] == d['y_pred']).mean():.1%}")
+    c2.metric("Truly stressed", f"{d['y'].mean():.1%} of time")
+    c3.metric("Predicted stressed", f"{d['y_pred'].mean():.1%} of time")
+
+
+def sleep_page():
+    """Hypnograms of true vs predicted sleep stages with sleep efficiency."""
+    st.title("Sleep staging")
+    preds = _load_preds("sleep")
+    model = st.selectbox("Model", sorted(preds))
+    df = preds[model]
+    subject = st.selectbox("Subject", sorted(df["subject"].unique()))
+    sub = df[df["subject"] == subject]
+    night = st.selectbox("Night", sorted(sub["night"].unique()))
+    d = sub[sub["night"] == night].sort_values("epoch")
+    if d.empty:
+        st.info("No epochs for this night.")
+        return
+    hours = d["epoch"].to_numpy() * 30 / 3600.0
+    fig, axes = plt.subplots(2, 1, figsize=(8, 4), sharex=True)
+    for ax, col, name, color in [(axes[0], "y", "True", "black"), (axes[1], "y_pred", "Predicted", "#d9534f")]:
+        ax.step(hours, data.hypnogram_order(d[col]), where="post", color=color, lw=1)
+        ax.set_yticks(list(data.HYP_TICKS), list(data.HYP_TICKS.values()))
+        ax.set_ylabel(name)
+    axes[1].set_xlabel("Time (hours)")
+    fig.tight_layout()
+    st.pyplot(fig)
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Sleep efficiency (true)", f"{data.sleep_efficiency(d['y']):.1%}")
+    c2.metric("Sleep efficiency (predicted)", f"{data.sleep_efficiency(d['y_pred']):.1%}")
+    c3.metric("Night accuracy", f"{(d['y'] == d['y_pred']).mean():.1%}")
 
 
 def main():
@@ -92,8 +150,10 @@ def main():
         leaderboard_page()
     elif page == "HR forecast":
         hr_page()
+    elif page == "Stress":
+        stress_page()
     else:
-        placeholder_page(page)
+        sleep_page()
 
 
 main()

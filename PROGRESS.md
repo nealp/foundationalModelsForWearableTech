@@ -12,9 +12,9 @@ Written to help us present the project (video, Devpost, judges' questions).
 | 1. Setup | ✅ Done | ~3:05 PM |
 | 2. Data + first results (Naive, ETS) | ✅ Done | ~3:15 PM |
 | 3. Chronos, TimesFM, XGBoost, Sleep-EDF | ✅ Done | ~4:15 PM |
-| 4. MOMENT + demo stress/sleep pages | ⏳ Next | target 6:20 PM |
-| 4b. PatchTST (add-back, we're ahead) | ⏳ After 4 | — |
-| 5. Ship: video, README, Devpost | ⏳ | target 7:00 PM |
+| 4. MOMENT + demo stress/sleep pages | ✅ Done | ~6:05 PM |
+| 4b. PatchTST (add-back) | ✅ Done | ~6:05 PM |
+| 5. Ship: real Colab runs, video, README, Devpost | ⏳ NOW | target 7:00 PM |
 
 **Real data so far:** Sleep-EDF ✅ (tested on 3 real people) · WESAD ❌ (waiting on download link)
 **Real jobs on Colab:** none run yet. All scores below are from local tests unless marked REAL.
@@ -140,3 +140,34 @@ and the sleep dataset ready.
 - **The test suite froze on macOS**: XGBoost and PyTorch each ship their own OpenMP threading library and can
   deadlock in one Python process. The real jobs are never affected (one model per process, Colab is Linux);
   the foundation-model tests now run each model in its own process. Full suite: 43 tests in ~24 s.
+
+---
+
+## Stage 4 — MOMENT, PatchTST, demo pages (done ~6:05 PM)
+
+**Goal:** every task gets a foundation model, a neural net for heart rate, and a complete demo.
+
+**What we built**
+- **MOMENT (CMU)**: `src/models/moment_model.py`. A frozen foundation model + a "linear probe":
+  - MOMENT turns each window into an embedding (a numeric fingerprint). **MOMENT itself is never trained.**
+  - Only a small logistic regression learns stress / sleep stage from those fingerprints.
+  - Stress: each of the 6 wrist channels is embedded separately (480 steps padded to MOMENT's 512, padding masked out).
+  - Sleep: each 30 s EEG chunk (3000 steps) is cut into 6 pieces of 500. Squashing it to 512 steps would erase the fast
+    brainwaves (alpha/sigma/beta) that sleep doctors use.
+  - Embeddings are cached, so 5 folds don't redo the same work 5 times.
+- **PatchTST (neural net, tier 3)**: `src/models/neural_forecast.py`. A transformer for time series, **trained from scratch
+  on our heart-rate data**, and only on people outside the test fold (a test proves this). Training length is
+  set by `PATCHTST_MAX_STEPS` (default 300) to fit Colab time.
+- **Demo pages**: a stress timeline (true vs. predicted, per person) and a sleep hypnogram (true vs. predicted) with
+  **sleep efficiency** (time asleep / time in bed). Fake-data fallback with a warning banner so we can film early.
+
+**Decisions + why**
+- **MOMENT install uses `--no-deps`:** momentfm pins numpy 1.25, which doesn't install on Python 3.12 (Colab). We tested
+  it with the newest libraries (transformers 5.20, torch 2.14) and it works.
+- **MOMENT-1-base** (not large): the plan says base sizes for Colab's GPU limits.
+- **Each heavy package gets its own environment** (`.venv-moment`, `.venv-nf`) locally, and its own Colab session.
+
+**How we checked it**
+- 51 tests pass (+8 in the PatchTST environment). Includes a real-weights MOMENT test: frozen MOMENT + logistic
+  regression separates slow vs. fast waves at ≥ 80% accuracy.
+- PatchTST through the real `run.py` (fake data, only 30 training steps): MAE 1.67 bpm in 26 s.

@@ -71,3 +71,28 @@ def test_run_cli_quick_writes_results(tmp_path, monkeypatch):
     assert not config.RESULTS_CSV.exists()  # quick runs never pollute the real leaderboard
     pred = pd.read_parquet(config.PREDICTIONS_DIR / "hr_naive_quick.parquet")
     assert list(pred.columns) == ["unique_id", "window_start", "ds", "y", "y_hat"]
+
+
+def test_trainable_forecaster_never_trains_on_test_people(tmp_path, monkeypatch):
+    """Models with fit() (PatchTST) are trained only on people outside the fold being tested."""
+    import importlib
+    import types
+    from src import config
+    monkeypatch.setenv("DATA_DIR", str(tmp_path))
+    importlib.reload(config)
+    importlib.reload(run)
+    config.ensure_dirs()
+    make_hr_df(4).to_parquet(config.WESAD_HR)
+    config.FOLDS_JSON.write_text(json.dumps({"wesad": {"S2": 0, "S3": 1, "S4": 2, "S5": 3}}))
+
+    seen = []
+    fake = types.SimpleNamespace(
+        fit=lambda train_df: seen.append(set(train_df["unique_id"])),
+        forecast=lambda context, horizon: stats_baselines.forecast(context, horizon, model="naive"),
+    )
+    monkeypatch.setitem(run.FORECASTERS, "fake", (3, lambda: fake))
+    run.main(["--task", "hr", "--model", "fake"])
+    tested = pd.read_parquet(config.PREDICTIONS_DIR / "hr_fake.parquet").groupby("unique_id").size().index
+    assert len(seen) == 4
+    for train_people, test_person in zip(seen, sorted(tested, key=lambda s: int(s[1:]))):
+        assert test_person not in train_people and len(train_people) == 3

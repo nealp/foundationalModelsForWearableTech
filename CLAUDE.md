@@ -309,18 +309,18 @@ Each person only edits their own folders. Need a change elsewhere? Ask the owner
 ### M3 — Foundation Models (P2)
 - [x] TimesFM on Task 1 (zero-shot)
 - [x] Chronos on Task 1 (zero-shot)
-- [ ] MOMENT embeddings + logistic regression on Tasks 2 and 3
+- [x] MOMENT embeddings + logistic regression on Tasks 2 and 3
 
 ### M4 — Neural Nets (P2) *(cut today unless ahead of schedule)*
-- [ ] PatchTST on Task 1 *(first add-back if ahead by ~5 PM)*
+- [x] PatchTST on Task 1 *(first add-back if ahead by ~5 PM)*
 - [ ] DeepAR on Task 1
 - [ ] Small 1D-CNN or LSTM on Tasks 2 and 3
 
 ### M5 — Demo (P3, can start at M2 using fake/partial results)
-- [ ] Leaderboard page (one bar chart per task, grouped by tier)
-- [ ] HR forecast page: real HR line + each model's 60s forecast on top
-- [ ] Stress page: timeline of true vs predicted stress for one person
-- [ ] Sleep page: true vs predicted hypnogram + sleep efficiency score
+- [x] Leaderboard page (one bar chart per task, grouped by tier)
+- [x] HR forecast page: real HR line + each model's 60s forecast on top
+- [x] Stress page: timeline of true vs predicted stress for one person
+- [x] Sleep page: true vs predicted hypnogram + sleep efficiency score
 
 ### M6 — Ship
 - [ ] Record demo video (see §10) **as soon as the demo works**

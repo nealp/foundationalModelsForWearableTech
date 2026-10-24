@@ -14,7 +14,7 @@ def is_ignored(path):
 def test_data_is_ignored():
     """Raw/processed data and model weights must never be committed."""
     for path in ["data/x.txt", "raw/x.txt", "processed/x.txt", "checkpoints/x.txt",
-                 "results/x.txt", "a.npz", "a.parquet", "a.edf", "a.pt", ".venv/x"]:
+                 "results/x.txt", "a.npz", "a.parquet", "a.edf", "a.pt", ".venv/x", ".venv-moment/x", ".venv-nf/x"]:
         assert is_ignored(path), path
 
 

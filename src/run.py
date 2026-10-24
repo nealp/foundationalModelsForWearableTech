@@ -24,12 +24,15 @@ FORECASTERS = {
     "ets": (1, lambda: _stats("ets")),
     "chronos": (4, lambda: importlib.import_module("src.models.chronos_model").forecast),
     "timesfm": (4, lambda: importlib.import_module("src.models.timesfm_model").forecast),
+    # PatchTST is the only HR model that TRAINS: the module has fit(train_df) + forecast(...)
+    "patchtst": (3, lambda: importlib.import_module("src.models.neural_forecast")),
 }
 
 # name -> function that imports the model module. Each module has TIER and build(task) -> object
 # with .fit(X, y) and .predict(X) (X = raw windows from the processed .npz file).
 CLASSIFIERS = {
     "xgboost": lambda: importlib.import_module("src.models.xgb_baseline"),
+    "moment": lambda: importlib.import_module("src.models.moment_model"),
 }
 
 # task -> (processed file, dataset name in folds.json)
@@ -83,7 +86,9 @@ def load_folds(dataset):
 def run_hr(model, quick=False, max_windows=None):
     """Task 1: zero-shot / per-window forecasting, scored on each fold's test subjects."""
     tier, load = FORECASTERS[model]
-    forecast = load()
+    loaded = load()
+    fit = getattr(loaded, "fit", None)  # only models that train (PatchTST) have this
+    forecast = getattr(loaded, "forecast", loaded)
     hr = pd.read_parquet(config.WESAD_HR)
     folds = load_folds("wesad")
 
@@ -98,6 +103,8 @@ def run_hr(model, quick=False, max_windows=None):
     all_preds = []
     for fold, subjects in fold_subjects.items():
         start = time.time()
+        if fit:  # train on everyone NOT in this fold (in --quick: the other folds' people)
+            fit(hr[~hr["unique_id"].isin(subjects) & hr["unique_id"].isin(list(folds))])
         context, target = make_hr_windows(hr[hr["unique_id"].isin(subjects)])
         if max_windows:  # evenly spaced sample of windows, to keep slow models fast
             ids = context["unique_id"].unique()
