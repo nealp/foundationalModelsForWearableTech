@@ -1,9 +1,9 @@
 # --- Data: NEVER commit (CLAUDE.md §4.2) ---
-data/
-raw/
-processed/
-checkpoints/
-results/
+/data/
+/raw/
+/processed/
+/checkpoints/
+/results/
 *.npz
 *.npy
 *.parquet
