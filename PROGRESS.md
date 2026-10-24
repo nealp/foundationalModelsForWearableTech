@@ -195,3 +195,6 @@ and the sleep dataset ready.
 - **Colab:** Claude drove Colab through the browser (Claude in Chrome): T4 GPU, repo cloned, Sleep-EDF processed.
   The output matched the laptop line for line (reproducible). Results go to Colab temp disk (no Drive permission
   needed) and are read from the cell output. Running: MOMENT on all 20 people.
+- **REAL, full 20-person MOMENT, Colab T4 — fold 0 done (6:51 PM):** macro-F1 **0.696**, accuracy **76.9%**
+  vs. XGBoost on the identical fold: 0.705 / 77.5% → **essentially tied.** Fold 0 took 34 min (it embeds all
+  42,308 epochs once; folds 1–4 reuse the cache). Folds 1–4 still running.

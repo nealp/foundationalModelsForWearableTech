@@ -39,9 +39,12 @@ has never seen, so it can't memorize anyone.
 | Task | Model | Tier | Score (mean ± std over folds) | Folds |
 |---|---|---|---|---|
 | Sleep staging | XGBoost | 2 · Classic ML | **macro-F1 0.69 ± 0.03** (accuracy ~75%) | 5 |
-| Sleep staging | MOMENT-1-base (frozen) + linear probe | 4 · Foundation | ⏳ running on Colab GPU | — |
+| Sleep staging | MOMENT-1-base (frozen) + linear probe | 4 · Foundation | **macro-F1 0.70** (accuracy 76.9%), fold 0 so far; folds 1–4 running on Colab | 1 of 5 |
 | Stress detection | XGBoost, MOMENT | 2, 4 | ⏳ waiting on WESAD data | — |
 | Heart-rate forecast | Naive, ETS, PatchTST, Chronos-2, TimesFM 3.0 | 1, 3, 4 | ⏳ waiting on WESAD data | — |
+
+**Head-to-head on the same fold (same 4 unseen people):** XGBoost 0.705 vs. frozen MOMENT 0.696 macro-F1. A foundation
+model that never saw EEG matches hand-engineered sleep features. On a tiny 3-person split, MOMENT won 0.635 vs. 0.435.
 
 Sleep-EDF: 20 people, 39 nights, 42,308 thirty-second epochs. Example night (SC0, night 1): true sleep efficiency
 77.6% vs. XGBoost-predicted 78.1%; 80.9% of epochs staged correctly.
