@@ -17,7 +17,7 @@ def get_pipeline():
         from chronos import Chronos2Pipeline
 
         torch.manual_seed(config.SEED)
-        device = "cuda" if torch.cuda.is_available() else "cpu"
+        device = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
         _pipeline = Chronos2Pipeline.from_pretrained(MODEL_ID, device_map=device)
     return _pipeline
 

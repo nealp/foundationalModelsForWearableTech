@@ -36,7 +36,7 @@ def get_model():
         torch.manual_seed(config.SEED)
         _model = MOMENTPipeline.from_pretrained(MODEL_ID, model_kwargs={"task_name": "embedding"})
         _model.init()
-        _model.to("cuda" if torch.cuda.is_available() else "cpu").eval()
+        _model.to("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu").eval()
     return _model
 
 

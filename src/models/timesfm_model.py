@@ -20,7 +20,7 @@ def get_model():
         from timesfm3 import ModelConfig, TimesFM3Evaluator
 
         torch.manual_seed(config.SEED)
-        device = "cuda" if torch.cuda.is_available() else "cpu"
+        device = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
         _model = TimesFM3Evaluator(ModelConfig(checkpoint_path=CHECKPOINT, per_core_batch_size=32, device=device))
     return _model
 
