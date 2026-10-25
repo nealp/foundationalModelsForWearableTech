@@ -34,23 +34,36 @@ has never seen, so it can't memorize anyone.
 ## Results
 
 <!-- Generated with: python -m src.eval.summary -->
-**Real results so far** (subject-wise 5-fold CV, every test person unseen):
+**Final results** (subject-wise 5-fold CV, every test person unseen, mean ± std over folds):
 
 | Task | Model | Tier | Score (mean ± std over folds) | Folds |
 |---|---|---|---|---|
-| Sleep staging | XGBoost | 2 · Classic ML | **macro-F1 0.69 ± 0.03** (accuracy ~75%) | 5 |
-| Sleep staging | MOMENT-1-base (frozen) + linear probe | 4 · Foundation | **macro-F1 0.70** (accuracy 76.9%), fold 0 so far; folds 1–4 running on Colab | 1 of 5 |
-| Stress detection | XGBoost, MOMENT | 2, 4 | ⏳ waiting on WESAD data | — |
-| Heart-rate forecast | Naive, ETS, PatchTST, Chronos-2, TimesFM 3.0 | 1, 3, 4 | ⏳ waiting on WESAD data | — |
+| Heart rate forecast | timesfm | 4 · Foundation | 13.89 ± 0.86 | 5 |
+| Heart rate forecast | chronos | 4 · Foundation | 13.96 ± 0.87 | 5 |
+| Heart rate forecast | patchtst | 3 · Neural net | 14.17 ± 0.81 | 5 |
+| Heart rate forecast | ets | 1 · Simple | 16.01 ± 1.67 | 5 |
+| Heart rate forecast | naive | 1 · Simple | 18.13 ± 0.79 | 5 |
+| Stress detection | moment | 4 · Foundation | 0.90 ± 0.04 | 5 |
+| Stress detection | xgboost | 2 · Classic ML | 0.83 ± 0.18 | 5 |
+| Sleep staging | xgboost | 2 · Classic ML | 0.69 ± 0.03 | 5 |
+| Sleep staging | moment | 4 · Foundation | 0.66 ± 0.05 | 5 |
 
-**Head-to-head on the same fold (same 4 unseen people):** XGBoost 0.705 vs. frozen MOMENT 0.696 macro-F1. A foundation
-model that never saw EEG matches hand-engineered sleep features. On a tiny 3-person split, MOMENT won 0.635 vs. 0.435.
+HR = MAE in bpm (lower is better). Stress/Sleep = macro-F1 (higher is better).
 
-Sleep-EDF: 20 people, 39 nights, 42,308 thirty-second epochs. Example night (SC0, night 1): true sleep efficiency
-77.6% vs. XGBoost-predicted 78.1%; 80.9% of epochs staged correctly.
+**What we found**
+- ❤️ **Heart-rate forecast:** the zero-shot foundation models win. **TimesFM 3.0 (13.89 bpm)** and **Chronos-2 (13.96)** edge out
+  PatchTST (14.17), which was *trained* on this data, and beat ETS (16.01) and Naive (18.13). Wrist-pulse heart rate is noisy,
+  so every model's error is high in absolute terms (MASE ≈ 1.1).
+- 😰 **Stress detection:** **frozen MOMENT + a linear probe (macro-F1 0.90)** beats XGBoost on hand-made features (0.83), and is far
+  more consistent across people (± 0.04 vs ± 0.18). On the hardest fold (S7, S14, S17), XGBoost drops to 0.51 while MOMENT holds 0.84.
+- 😴 **Sleep staging:** the classic baseline wins here. **XGBoost on EEG band powers (0.69)** beats frozen MOMENT (0.66). They tie on
+  fold 0 (0.705 vs 0.696), but XGBoost is ahead on the other folds. On a tiny 3-person split MOMENT won (0.635 vs 0.435), so the foundation
+  model helps most when training data is scarce.
 
-Every model above is implemented and tested end to end (`python -m pytest -q tests`); rows marked ⏳ only need
-their job run. Regenerate this table with `python -m src.eval.summary`.
+Sleep-EDF: 20 people, 39 nights, 42,308 thirty-second epochs. WESAD: 15 people, 1,015 stress windows. Example night (SC0, night 1):
+true sleep efficiency 77.6% vs. XGBoost-predicted 78.1%; 80.9% of epochs staged correctly.
+
+Regenerate this table with `python -m src.eval.summary`.
 
 ## Demo
 
